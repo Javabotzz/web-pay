@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kasir-POS Modern</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+
+<body>
+  <div class="app-container">
+    <nav class="navbar">
+      <div class="navbar-brand">
+        <i class="fas fa-cash-register"></i> Kasir-POS
+      </div>
+      <div class="navbar-menu">
+        <a href="#" class="nav-link active" data-page="dashboard">
+          <i class="fas fa-tachometer-alt"></i> Dashboard
+        </a>
+        <a href="#" class="nav-link" data-page="products">
+          <i class="fas fa-boxes"></i> Produk
+        </a>
+        <a href="#" class="nav-link" data-page="cashier">
+          <i class="fas fa-shopping-cart"></i> Kasir
+        </a>
+        <a href="#" class="nav-link" data-page="reports">
+          <i class="fas fa-chart-line"></i> Laporan
+        </a>
+        <a href="#" class="nav-link" data-page="suppliers">
+          <i class="fas fa-truck"></i> Supplier
+        </a>
+        <a href="#" class="nav-link" data-page="settings">
+          <i class="fas fa-cog"></i> Pengaturan
+        </a>
+      </div>
+      <div class="navbar-notification">
+        <button id="notification-btn" class="notification-icon">
+          <i class="fas fa-bell"></i>
+        </button>
+        <div class="notification-badge hidden">0</div>
+      </div>
+    </nav>
+    
+    <main class="main-content">
+      <!-- Dashboard Page -->
+      <div id="dashboard-page" class="page active">
+        <div class="page-header">
+          <h2><i class="fas fa-tachometer-alt"></i> Dashboard</h2>
+          <div class="date-display" id="current-date"></div>
+        </div>
+        
+        <div class="dashboard-cards">
+          <div class="card sales-card">
+            <div class="card-icon">
+              <i class="fas fa-wallet"></i>
+            </div>
+            <div class="card-content">
+              <h3>Penjualan Hari Ini</h3>
+              <p id="today-sales">Rp 0</p>
+            </div>
+          </div>
+          <div class="card products-card">
+            <div class="card-icon">
+              <i class="fas fa-box-open"></i>
+            </div>
+            <div class="card-content">
+              <h3>Total Produk</h3>
+              <p id="total-products">0</p>
+            </div>
+          </div>
+          <div class="card stock-card">
+            <div class="card-icon">
+              <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="card-content">
+              <h3>Produk Habis</h3>
+              <p id="out-of-stock">0</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="dashboard-sections">
+          <div class="section">
+            <div class="section-header">
+              <h3><i class="fas fa-boxes"></i> Produk yang Perlu Restok</h3>
+              <button class="btn-refresh" id="refresh-restock"><i class="fas fa-sync-alt"></i></button>
+            </div>
+            <div id="restock-products" class="product-list"></div>
+          </div>
+          <div class="section">
+            <div class="section-header">
+              <h3><i class="fas fa-star"></i> Produk Terpopuler</h3>
+              <button class="btn-refresh" id="refresh-popular"><i class="fas fa-sync-alt"></i></button>
+            </div>
+            <div id="popular-products" class="product-list"></div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Products Management Page -->
+      <div id="products-page" class="page">
+        <div class="page-header">
+          <h2><i class="fas fa-boxes"></i> Manajemen Produk</h2>
+          <div class="action-buttons">
+            <button id="add-product-btn" class="btn-primary">
+              <i class="fas fa-plus"></i> Tambah Produk
+            </button>
+          </div>
+        </div>
+        
+        <div class="search-container">
+          <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" id="product-search" placeholder="Cari produk...">
+          </div>
+        </div>
+        
+        <div class="table-container">
+          <table id="products-table">
+            <thead>
+              <tr>
+                <th>Kode</th>
+                <th>Nama</th>
+                <th>Kategori</th>
+                <th>Harga</th>
+                <th>Stok</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="products-list">
+              <!-- Produk akan dimuat di sini -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+      
+      <!-- Add/Edit Product Modal -->
+      <div id="product-modal" class="modal hidden">
+        <div class="modal-content">
+          <span class="close-modal">&times;</span>
+          <h3 id="product-modal-title"><i class="fas fa-box"></i> Tambah Produk Baru</h3>
+          <form id="product-form">
+            <input type="hidden" id="product-id">
+            
+            <div class="form-row">
+              <div class="form-group">
+                <label for="product-code"><i class="fas fa-barcode"></i> Kode Produk</label>
+                <input type="text" id="product-code" required>
+                <div class="error-message" id="code-error"></div>
+              </div>
+              <div class="form-group">
+                <label for="product-name"><i class="fas fa-tag"></i> Nama Produk</label>
+                <input type="text" id="product-name" required>
+                <div class="error-message" id="name-error"></div>
+              </div>
+            </div>
+            
+            <div class="form-row">
+              <div class="form-group">
+                <label for="product-category"><i class="fas fa-list"></i> Kategori</label>
+                <input type="text" id="product-category" required>
+                <div class="error-message" id="category-error"></div>
+              </div>
+              <div class="form-group">
+                <label for="product-supplier"><i class="fas fa-truck"></i> Supplier</label>
+                <select id="product-supplier">
+                  <option value="">Pilih Supplier</option>
+                </select>
+              </div>
+            </div>
+            
+            <div class="form-row">
+              <div class="form-group">
+                <label for="product-price"><i class="fas fa-money-bill-wave"></i> Harga Jual</label>
+                <input type="number" id="product-price" min="0" step="100" required>
+                <div class="error-message" id="price-error"></div>
+              </div>
+              <div class="form-group">
+                <label for="product-cost"><i class="fas fa-money-bill-alt"></i> Harga Beli</label>
+                <input type="number" id="product-cost" min="0" step="100" required>
+                <div class="error-message" id="cost-error"></div>
+              </div>
+            </div>
+            
+            <div class="form-row">
+              <div class="form-group">
+                <label for="product-stock"><i class="fas fa-boxes"></i> Stok</label>
+                <input type="number" id="product-stock" min="0" required>
+                <div class="error-message" id="stock-error"></div>
+              </div>
+              <div class="form-group">
+                <label for="product-min-stock"><i class="fas fa-exclamation-triangle"></i> Stok Minimum</label>
+                <input type="number" id="product-min-stock" min="0" required>
+                <div class="error-message" id="min-stock-error"></div>
+              </div>
+            </div>
+            
+            <div class="form-actions">
+              <button type="button" class="btn-secondary close-modal">
+                <i class="fas fa-times"></i> Batal
+              </button>
+              <button type="submit" class="btn-primary">
+                <i class="fas fa-save"></i> Simpan
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+      
+      <!-- Cashier Page -->
+      <div id="cashier-page" class="page">
+        <div class="page-header">
+          <h2><i class="fas fa-shopping-cart"></i> Kasir</h2>
+          <div class="invoice-number" id="current-invoice"></div>
+        </div>
+        
+        <div class="cashier-container">
+          <div class="product-selection">
+            <div class="search-container">
+              <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="cashier-search" placeholder="Cari produk...">
+              </div>
+            </div>
+            <div id="cashier-products" class="product-grid"></div>
+          </div>
+          
+          <div class="cart-section">
+            <div class="cart-header">
+              <h3><i class="fas fa-shopping-basket"></i> Keranjang Belanja</h3>
+              <button id="clear-cart-btn" class="btn-danger">
+                <i class="fas fa-trash"></i> Kosongkan
+              </button>
+            </div>
+            
+            <div class="cart-items" id="cart-items">
+              <!-- Item keranjang akan dimuat di sini -->
+            </div>
+            
+            <div class="cart-summary">
+              <div class="summary-row">
+                <span>Subtotal:</span>
+                <span id="subtotal">Rp 0</span>
+              </div>
+              
+              <div class="summary-row discount-row">
+                <div class="toggle-container">
+                  <label for="discount-toggle">Diskon:</label>
+                  <label class="switch">
+                    <input type="checkbox" id="discount-toggle">
+                    <span class="slider round"></span>
+                  </label>
+                </div>
+                <input type="number" id="discount-value" min="0" max="100" disabled>
+                <span>%</span>
+              </div>
+              
+              <div class="summary-row tax-row">
+                <div class="toggle-container">
+                  <label for="tax-toggle">Pajak:</label>
+                  <label class="switch">
+                    <input type="checkbox" id="tax-toggle">
+                    <span class="slider round"></span>
+                  </label>
+                </div>
+                <input type="number" id="tax-value" min="0" max="100" disabled>
+                <span>%</span>
+              </div>
+              
+              <div class="summary-row total">
+                <span>Total:</span>
+                <span id="total-amount">Rp 0</span>
+              </div>
+              
+              <div class="payment-section">
+                <div class="form-group">
+                  <label for="payment-method"><i class="fas fa-credit-card"></i> Metode Pembayaran</label>
+                  <select id="payment-method">
+                    <option value="cash">Tunai</option>
+                    <option value="debit">Kartu Debit</option>
+                    <option value="credit">Kartu Kredit</option>
+                    <option value="transfer">Transfer</option>
+                  </select>
+                </div>
+                
+                <div class="form-group">
+                  <label for="amount-received"><i class="fas fa-money-bill-wave"></i> Diterima</label>
+                  <input type="number" id="amount-received" min="0">
+                </div>
+                
+                <div class="form-group">
+                  <label for="change"><i class="fas fa-exchange-alt"></i> Kembalian</label>
+                  <input type="number" id="change" readonly>
+                </div>
+                
+                <button id="process-payment" class="btn-primary btn-pay">
+                  <i class="fas fa-cash-register"></i> Proses Pembayaran
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Reports Page -->
+      <div id="reports-page" class="page">
+        <div class="page-header">
+          <h2><i class="fas fa-chart-line"></i> Laporan Penjualan</h2>
+        </div>
+        
+        <div class="report-filters">
+          <div class="filter-group">
+            <label for="report-type"><i class="fas fa-filter"></i> Jenis Laporan:</label>
+            <select id="report-type">
+              <option value="daily">Harian</option>
+              <option value="weekly">Mingguan</option>
+              <option value="monthly">Bulanan</option>
+              <option value="yearly">Tahunan</option>
+              <option value="custom">Kustom</option>
+            </select>
+          </div>
+          
+          <div class="filter-group" id="daily-filter">
+            <label for="report-date"><i class="fas fa-calendar-day"></i> Tanggal:</label>
+            <input type="date" id="report-date">
+          </div>
+          
+          <div class="filter-group hidden" id="custom-filter">
+            <label for="start-date"><i class="fas fa-calendar-alt"></i> Dari:</label>
+            <input type="date" id="start-date">
+            <label for="end-date">Sampai:</label>
+            <input type="date" id="end-date">
+          </div>
+          
+          <div class="filter-actions">
+            <button id="generate-report" class="btn-primary">
+              <i class="fas fa-sync-alt"></i> Generate
+            </button>
+            <button id="export-pdf" class="btn-secondary">
+              <i class="fas fa-file-pdf"></i> Export PDF
+            </button>
+            <button id="export-excel" class="btn-secondary">
+              <i class="fas fa-file-excel"></i> Export Excel
+            </button>
+          </div>
+        </div>
+        
+        <div class="report-results">
+          <div class="report-summary">
+            <h3><i class="fas fa-chart-pie"></i> Ringkasan Laporan</h3>
+            <div class="summary-cards">
+              <div class="card">
+                <h4>Total Penjualan</h4>
+                <p id="report-total-sales">Rp 0</p>
+              </div>
+              <div class="card">
+                <h4>Total Transaksi</h4>
+                <p id="report-total-transactions">0</p>
+              </div>
+              <div class="card">
+                <h4>Produk Terjual</h4>
+                <p id="report-total-items">0</p>
+              </div>
+            </div>
+          </div>
+          
+          <div class="report-details">
+            <h3><i class="fas fa-list"></i> Detail Transaksi</h3>
+            <div class="table-container">
+              <table id="transactions-table">
+                <thead>
+                  <tr>
+                    <th>No. Transaksi</th>
+                    <th>Tanggal</th>
+                    <th>Items</th>
+                    <th>Total</th>
+                    <th>Pembayaran</th>
+                    <th>Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="transactions-list">
+                  <!-- Transaksi akan dimuat di sini -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Suppliers Page -->
+      <div id="suppliers-page" class="page">
+        <div class="page-header">
+          <h2><i class="fas fa-truck"></i> Manajemen Supplier</h2>
+          <div class="action-buttons">
+            <button id="add-supplier-btn" class="btn-primary">
+              <i class="fas fa-plus"></i> Tambah Supplier
+            </button>
+          </div>
+        </div>
+        
+        <div class="search-container">
+          <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" id="supplier-search" placeholder="Cari supplier...">
+          </div>
+        </div>
+        
+        <div class="table-container">
+          <table id="suppliers-table">
+            <thead>
+              <tr>
+                <th>Kode</th>
+                <th>Nama</th>
+                <th>Kontak</th>
+                <th>Alamat</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="suppliers-list">
+              <!-- Supplier akan dimuat di sini -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+      
+      <!-- Add/Edit Supplier Modal -->
+      <div id="supplier-modal" class="modal hidden">
+        <div class="modal-content">
+          <span class="close-modal">&times;</span>
+          <h3 id="supplier-modal-title"><i class="fas fa-truck"></i> Tambah Supplier Baru</h3>
+          <form id="supplier-form">
+            <input type="hidden" id="supplier-id">
+            
+            <div class="form-row">
+              <div class="form-group">
+                <label for="supplier-code"><i class="fas fa-barcode"></i> Kode Supplier</label>
+                <input type="text" id="supplier-code" required>
+                <div class="error-message" id="supplier-code-error"></div>
+              </div>
+              <div class="form-group">
+                <label for="supplier-name"><i class="fas fa-tag"></i> Nama Supplier</label>
+                <input type="text" id="supplier-name" required>
+                <div class="error-message" id="supplier-name-error"></div>
+              </div>
+            </div>
+            
+            <div class="form-row">
+              <div class="form-group">
+                <label for="supplier-contact"><i class="fas fa-phone"></i> Kontak</label>
+                <input type="text" id="supplier-contact" required>
+                <div class="error-message" id="supplier-contact-error"></div>
+              </div>
+              <div class="form-group">
+                <label for="supplier-phone"><i class="fas fa-mobile-alt"></i> Telepon</label>
+                <input type="tel" id="supplier-phone">
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label for="supplier-address"><i class="fas fa-map-marker-alt"></i> Alamat</label>
+              <textarea id="supplier-address" rows="3" required></textarea>
+              <div class="error-message" id="supplier-address-error"></div>
+            </div>
+            
+            <div class="form-group">
+              <label for="supplier-email"><i class="fas fa-envelope"></i> Email</label>
+              <input type="email" id="supplier-email">
+              <div class="error-message" id="supplier-email-error"></div>
+            </div>
+            
+            <div class="form-actions">
+              <button type="button" class="btn-secondary close-modal">
+                <i class="fas fa-times"></i> Batal
+              </button>
+              <button type="submit" class="btn-primary">
+                <i class="fas fa-save"></i> Simpan
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+      
+      <!-- Settings Page -->
+      <div id="settings-page" class="page">
+        <div class="page-header">
+          <h2><i class="fas fa-cog"></i> Pengaturan</h2>
+        </div>
+        
+        <div class="settings-tabs">
+          <div class="tab-buttons">
+            <button class="tab-btn active" data-tab="store-settings">
+              <i class="fas fa-store"></i> Toko
+            </button>
+            <button class="tab-btn" data-tab="receipt-settings">
+              <i class="fas fa-receipt"></i> Struk
+            </button>
+            <button class="tab-btn" data-tab="backup-settings">
+              <i class="fas fa-database"></i> Backup
+            </button>
+          </div>
+          
+          <div class="tab-content">
+            <!-- Store Settings -->
+            <div id="store-settings" class="tab-pane active">
+              <form id="store-form">
+                <div class="form-group">
+                  <label for="store-name"><i class="fas fa-signature"></i> Nama Toko</label>
+                  <input type="text" id="store-name" required>
+                  <div class="error-message" id="store-name-error"></div>
+                </div>
+                
+                <div class="form-group">
+                  <label for="store-address"><i class="fas fa-map-marked-alt"></i> Alamat Toko</label>
+                  <textarea id="store-address" rows="3" required></textarea>
+                  <div class="error-message" id="store-address-error"></div>
+                </div>
+                
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="store-phone"><i class="fas fa-phone"></i> Telepon</label>
+                    <input type="tel" id="store-phone">
+                  </div>
+                  <div class="form-group">
+                    <label for="store-email"><i class="fas fa-envelope"></i> Email</label>
+                    <input type="email" id="store-email">
+                  </div>
+                </div>
+                
+                <div class="form-group">
+                  <label for="store-tax-id"><i class="fas fa-file-invoice-dollar"></i> NPWP</label>
+                  <input type="text" id="store-tax-id">
+                </div>
+                
+                <div class="form-actions">
+                  <button type="submit" class="btn-primary">
+                    <i class="fas fa-save"></i> Simpan Pengaturan
+                  </button>
+                </div>
+              </form>
+            </div>
+            
+            <!-- Receipt Settings -->
+            <div id="receipt-settings" class="tab-pane">
+              <form id="receipt-form">
+                <div class="form-group">
+                  <label for="receipt-header"><i class="fas fa-heading"></i> Header Struk</label>
+                  <textarea id="receipt-header" rows="3"></textarea>
+                </div>
+                
+                <div class="form-group">
+                  <label for="receipt-footer"><i class="fas fa-paragraph"></i> Footer Struk</label>
+                  <textarea id="receipt-footer" rows="3"></textarea>
+                </div>
+                
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="receipt-tax"><i class="fas fa-percentage"></i> Tampilkan Pajak di Struk</label>
+                    <label class="switch">
+                      <input type="checkbox" id="receipt-tax">
+                      <span class="slider round"></span>
+                    </label>
+                  </div>
+                </div>
+                
+                <div class="form-group">
+                  <label for="receipt-logo"><i class="fas fa-image"></i> Logo Struk</label>
+                  <div class="file-upload">
+                    <label for="receipt-logo" class="file-upload-label">
+                      <i class="fas fa-upload"></i> Pilih Gambar
+                    </label>
+                    <input type="file" id="receipt-logo" accept="image/*">
+                    <span id="file-name">Belum ada file dipilih</span>
+                  </div>
+                </div>
+                
+                <div class="form-actions">
+                  <button type="submit" class="btn-primary">
+                    <i class="fas fa-save"></i> Simpan Pengaturan
+                  </button>
+                </div>
+              </form>
+            </div>
+            
+            <!-- Backup Settings -->
+            <div id="backup-settings" class="tab-pane">
+              <div class="backup-options">
+                <div class="backup-section">
+                  <div class="backup-icon">
+                    <i class="fas fa-download"></i>
+                  </div>
+                  <h3>Backup Data</h3>
+                  <p>Buat cadangan semua data aplikasi ke file JSON.</p>
+                  <button id="backup-btn" class="btn-primary">
+                    <i class="fas fa-file-export"></i> Buat Backup
+                  </button>
+                </div>
+                
+                <div class="backup-section">
+                  <div class="backup-icon">
+                    <i class="fas fa-upload"></i>
+                  </div>
+                  <h3>Restore Data</h3>
+                  <p>Muat data dari file backup sebelumnya.</p>
+                  <div class="file-upload">
+                    <label for="restore-file" class="file-upload-label">
+                      <i class="fas fa-file-import"></i> Pilih File Backup
+                    </label>
+                    <input type="file" id="restore-file" accept=".json">
+                    <span id="restore-file-name">Belum ada file dipilih</span>
+                  </div>
+                  <button id="restore-btn" class="btn-primary">
+                    <i class="fas fa-sync-alt"></i> Restore Data
+                  </button>
+                </div>
+                
+                <div class="backup-section danger-section">
+                  <div class="backup-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                  </div>
+                  <h3>Reset Data</h3>
+                  <p>Hapus semua data dan reset ke pengaturan awal.</p>
+                  <button id="reset-btn" class="btn-danger">
+                    <i class="fas fa-trash-alt"></i> Reset Aplikasi
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+    
+    <!-- Notification Panel -->
+    <div id="notification-panel" class="notification-panel hidden">
+      <div class="notification-header">
+        <h3><i class="fas fa-bell"></i> Notifikasi</h3>
+        <button id="close-notification" class="close-btn">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="notification-list" id="notification-list">
+        <!-- Notifikasi akan dimuat di sini -->
+      </div>
+    </div>
+  </div>
+  
+  <!-- Toast Notification -->
+  <div id="toast-notification" class="toast hidden"></div>
+  
+  <script src="app.js"></script>
+</body>
+
+</html>
